@@ -1,16 +1,21 @@
 package com.example.hivedemo.controllor;
 
+import com.example.hivedemo.syncEvent.SerchHiveEvent;
+import com.example.hivedemo.syncEvent.SerchHiveParams;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.WebApplicationContext;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -18,7 +23,12 @@ import java.util.List;
 public class HiveTestControllor {
 
     @Autowired
+    WebApplicationContext wac;
+
+    @Autowired
     DataSource druidDataSource;
+
+
 
     @RequestMapping(value = "/listtable",method = RequestMethod.GET)
     public List<String> testHiveCon(){
@@ -76,6 +86,55 @@ public class HiveTestControllor {
             list.add(str);
         }
         return list;
+    }
+
+    /**
+     * 查询指定tableName指定字段
+     */
+    @RequestMapping("/table/selectColumn")
+    public List<String> selectColumnFromTable(String tableName,String cloumns) throws SQLException {
+        String[] split = cloumns.split(",");
+        Statement statement = druidDataSource.getConnection().createStatement();
+        StringBuilder sb = new StringBuilder();
+        sb.append("select").append(" "+cloumns);
+        sb.append(" from ").append(tableName);
+        String sql = sb.toString();
+        log.info("Running: " + sql);
+        ResultSet res = statement.executeQuery(sql);
+        List<String> list = new ArrayList<>();
+        int count = res.getMetaData().getColumnCount();
+        String str = null;
+        while (res.next()) {
+            str = "";
+            for (int i = 1; i < count; i++) {
+                str += res.getString(i) + " ";
+            }
+            str += res.getString(count);
+            log.info(str);
+            list.add(str);
+        }
+        return list;
+    }
+
+    /**
+     * 查询指定tableName指定字段--异步方式，并写入文件中
+     */
+    @RequestMapping("/table/selectColumn2")
+    public String selectColumnFromTable2(String tableName,String cloumns,String path) {
+        String[] split = cloumns.split(",");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("select").append(" "+cloumns);
+        sb.append(" from ").append(tableName);
+        String sql = sb.toString();
+        log.info("Running: " + sql);
+
+        SerchHiveParams serchHiveParams = new SerchHiveParams();
+        serchHiveParams.setSql(sql);
+        serchHiveParams.setPath(path);
+
+        wac.publishEvent(new SerchHiveEvent(serchHiveParams));
+        return "doing";
     }
 
 
