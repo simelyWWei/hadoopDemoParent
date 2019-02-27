@@ -9,4 +9,8 @@ public class SerchHiveParams {
 
     private String path;
 
+    private String tableName;
+
+    private String columns;
+
 }

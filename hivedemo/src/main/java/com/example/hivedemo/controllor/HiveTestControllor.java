@@ -132,6 +132,8 @@ public class HiveTestControllor {
         SerchHiveParams serchHiveParams = new SerchHiveParams();
         serchHiveParams.setSql(sql);
         serchHiveParams.setPath(path);
+        serchHiveParams.setTableName(tableName);
+        serchHiveParams.setColumns(cloumns);
 
         wac.publishEvent(new SerchHiveEvent(serchHiveParams));
         return "doing";
